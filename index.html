@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Mission Calculus Escape</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+
+body{
+font-family:Arial, sans-serif;
+background:#0f172a;
+color:white;
+text-align:center;
+margin:0;
+padding:20px;
+}
+
+.container{
+max-width:600px;
+margin:auto;
+background:#1e293b;
+padding:25px;
+border-radius:12px;
+box-shadow:0 0 15px rgba(0,0,0,0.4);
+}
+
+h1{
+font-size:28px;
+margin-bottom:10px;
+}
+
+button{
+padding:12px;
+margin-top:10px;
+font-size:18px;
+border:none;
+border-radius:8px;
+background:#22c55e;
+color:white;
+width:100%;
+cursor:pointer;
+}
+
+button:hover{
+background:#16a34a;
+}
+
+input{
+padding:12px;
+font-size:18px;
+width:100%;
+margin-top:10px;
+border-radius:6px;
+border:none;
+}
+
+#leaderboard{
+margin-top:10px;
+font-size:16px;
+}
+
+footer{
+margin-top:30px;
+font-size:14px;
+color:#cbd5f5;
+}
+
+@media (max-width:600px){
+
+h1{
+font-size:22px;
+}
+
+button{
+font-size:16px;
+}
+
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>Mission Calculus Escape</h1>
+
+<div id="start">
+
+<input id="playerName" placeholder="Masukkan nama anda">
+<button onclick="startGame()">Start Mission</button>
+
+</div>
+
+<div id="game" style="display:none">
+
+<h2 id="levelTitle"></h2>
+<p id="question"></p>
+
+<input id="answer" placeholder="Jawapan anda">
+<button onclick="submitAnswer()">Submit</button>
+
+<p id="message"></p>
+
+</div>
+
+<div id="finish" style="display:none">
+
+<h2>Mission Complete</h2>
+<p id="finalScore"></p>
+
+<h3>Leaderboard</h3>
+<div id="leaderboard"></div>
+
+</div>
+
+</div>
+
+<footer>
+Aplikasi ini dihasilkan oleh <b>Cikgu Anis</b> – Kolej Vokasional Kajang
+</footer>
+
+<!-- SOUND -->
+
+<audio id="correctSound">
+<source src="https://assets.mixkit.co/sfx/preview/mixkit-correct-answer-tone-2870.mp3">
+</audio>
+
+<audio id="wrongSound">
+<source src="https://assets.mixkit.co/sfx/preview/mixkit-wrong-answer-fail-notification-946.mp3">
+</audio>
+
+<audio id="winSound">
+<source src="https://assets.mixkit.co/sfx/preview/mixkit-game-level-completed-2059.mp3">
+</audio>
+
+<script>
+
+const levels = [
+
+{question:"Derivative of x² ?",answer:"2x"},
+{question:"Derivative of 3x² ?",answer:"6x"},
+{question:"Derivative of sin(x) ?",answer:"cos(x)"},
+{question:"Derivative of cos(x) ?",answer:"-sin(x)"},
+{question:"Integral of 2x dx ?",answer:"x^2"}
+
+]
+
+let currentLevel=0
+let player=""
+
+function startGame(){
+
+player=document.getElementById("playerName").value
+
+if(player===""){
+alert("Sila masukkan nama")
+return
+}
+
+document.getElementById("start").style.display="none"
+document.getElementById("game").style.display="block"
+
+loadLevel()
+
+}
+
+function loadLevel(){
+
+document.getElementById("levelTitle").innerText="Level "+(currentLevel+1)
+document.getElementById("question").innerText=levels[currentLevel].question
+document.getElementById("answer").value=""
+document.getElementById("message").innerText=""
+
+}
+
+function submitAnswer(){
+
+let ans=document.getElementById("answer").value
+
+if(ans===levels[currentLevel].answer){
+
+document.getElementById("correctSound").play()
+
+currentLevel++
+
+if(currentLevel>=levels.length){
+
+finishGame()
+
+}else{
+
+document.getElementById("message").innerText="Betul! Teruskan ke level seterusnya."
+loadLevel()
+
+}
+
+}else{
+
+document.getElementById("wrongSound").play()
+document.getElementById("message").innerText="Jawapan salah. Cuba lagi."
+
+}
+
+}
+
+function finishGame(){
+
+document.getElementById("winSound").play()
+
+document.getElementById("game").style.display="none"
+document.getElementById("finish").style.display="block"
+
+let score=levels.length
+
+document.getElementById("finalScore").innerText="Score: "+score
+
+saveScore(player,score)
+loadLeaderboard()
+
+}
+
+</script>
+
+<!-- FIREBASE -->
+
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+
+<script>
+
+const firebaseConfig = {
+
+ apiKey: "AIzaSyCtXEaVUfNLDQbeskXw-3EJ9KXUDynoBv8",
+  authDomain: "missioncalculusgame.firebaseapp.com",
+  databaseURL: "https://missioncalculusgame-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "missioncalculusgame",
+  storageBucket: "missioncalculusgame.firebasestorage.app",
+  messagingSenderId: "674496394742",
+  appId: "1:674496394742:web:66157f59baf2614a6e83d7"
+}
+
+firebase.initializeApp(firebaseConfig)
+
+const db=firebase.database()
+
+function saveScore(name,score){
+
+db.ref("leaderboard").push({
+name:name,
+score:score
+})
+
+}
+
+function loadLeaderboard(){
+
+db.ref("leaderboard").once("value",function(snapshot){
+
+let data=snapshot.val()
+let html=""
+
+for(let id in data){
+
+html+=data[id].name+" : "+data[id].score+"<br>"
+
+}
+
+document.getElementById("leaderboard").innerHTML=html
+
+})
+
+}
+
+</script>
+
+</body>
+</html>

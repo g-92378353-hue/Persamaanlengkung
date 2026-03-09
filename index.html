@@ -5,7 +5,7 @@
     <title>Misi Pengamiran: Persamaan Lengkung</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <!-- MathJax -->
+    <!-- MathJax untuk paparan formula matematik yang kemas -->
     <script>
         window.MathJax = {
             tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
@@ -18,12 +18,14 @@
 
     <!-- Firebase SDK (Compat) -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
     <style>
         :root {
             --bg-dark: #020617;
             --gold: #fbbf24;
+            --primary: #38bdf8;
             --success: #22c55e;
             --danger: #ef4444;
             --text-white: #f8fafc;
@@ -39,111 +41,151 @@
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
+            overflow-x: hidden;
         }
 
         .container {
             width: 100%;
-            max-width: 650px;
-            background: rgba(30, 41, 59, 0.9);
-            backdrop-filter: blur(10px);
+            max-width: 600px;
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(12px);
             padding: 30px;
-            border-radius: 20px;
+            border-radius: 24px;
             box-shadow: 0 0 40px rgba(56, 189, 248, 0.2);
             text-align: center;
-            border: 2px solid rgba(251, 191, 36, 0.4);
+            border: 2px solid rgba(251, 191, 36, 0.3);
+            margin-top: 20px;
         }
 
         h1 {
             color: var(--gold);
             text-transform: uppercase;
-            letter-spacing: 2px;
-            text-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
+            letter-spacing: 3px;
+            text-shadow: 0 0 15px rgba(251, 191, 36, 0.5);
+            margin-bottom: 25px;
         }
 
         .math-box {
-            font-size: 20px;
+            font-size: 22px;
             background: rgba(0, 0, 0, 0.6);
             padding: 25px;
-            border-radius: 12px;
+            border-radius: 15px;
             margin: 20px 0;
-            border-left: 5px solid var(--gold);
+            border-left: 6px solid var(--gold);
             text-align: left;
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.5);
         }
 
         input {
             width: 100%;
             padding: 16px;
             font-size: 18px;
-            border-radius: 10px;
+            border-radius: 12px;
             border: 2px solid #334155;
             background: #0f172a;
             color: white;
             text-align: center;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
+            transition: all 0.3s;
+            box-sizing: border-box;
         }
 
-        .shake { animation: shake 0.4s ease-in-out; border-color: var(--danger); }
+        input:focus {
+            outline: none;
+            border-color: var(--gold);
+            box-shadow: 0 0 15px rgba(251, 191, 36, 0.4);
+        }
+
+        .shake {
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+            border-color: var(--danger) !important;
+        }
+
         @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
         }
 
         button {
             width: 100%;
-            padding: 15px;
+            padding: 16px;
             margin-top: 10px;
             font-size: 16px;
             font-weight: 800;
             border: none;
-            border-radius: 10px;
+            border-radius: 12px;
             cursor: pointer;
             text-transform: uppercase;
-            transition: 0.2s;
+            transition: all 0.2s;
         }
 
-        .btn-main { background: linear-gradient(135deg, #fbbf24, #d97706); color: #020617; }
-        .btn-hint { background: #38bdf8; color: white; }
-        button:active { transform: scale(0.98); }
+        .btn-main { background: linear-gradient(135deg, #fbbf24, #d97706); color: #020617; box-shadow: 0 4px 0 #92400e; }
+        .btn-hint { background: linear-gradient(135deg, #38bdf8, #1d4ed8); color: white; box-shadow: 0 4px 0 #1e40af; }
+        
+        button:active { transform: translateY(3px); box-shadow: none; }
 
         .hint-section {
-            background: rgba(30, 64, 175, 0.3);
+            background: rgba(56, 189, 248, 0.1);
             padding: 15px;
-            border-radius: 10px;
+            border-radius: 12px;
             margin-top: 15px;
             display: none;
-            border: 1px dashed var(--gold);
+            border: 1px dashed var(--primary);
+            text-align: left;
+            font-size: 0.95rem;
         }
 
-        .message { margin-top: 20px; font-weight: 900; font-size: 1.5rem; height: 30px; }
+        .message {
+            margin-top: 20px;
+            font-weight: 900;
+            font-size: 1.5rem;
+            min-height: 35px;
+            text-shadow: 0 0 10px rgba(255,255,255,0.2);
+        }
 
         #leaderboard {
             margin-top: 30px;
             width: 100%;
-            max-width: 650px;
-            background: rgba(15, 23, 42, 0.8);
-            padding: 15px;
-            border-radius: 15px;
+            max-width: 600px;
+            background: rgba(15, 23, 42, 0.9);
+            padding: 20px;
+            border-radius: 20px;
+            border: 1px solid rgba(251, 191, 36, 0.2);
         }
 
-        .victory-title { font-size: 4rem; color: var(--gold); font-weight: 900; font-style: italic; }
+        .victory-title {
+            font-size: 4rem;
+            color: var(--gold);
+            font-weight: 900;
+            text-shadow: 0 0 30px var(--gold);
+            font-style: italic;
+        }
+
+        .list-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid #1e293b;
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>🏆 Liga Kalkulus</h1>
+    <h1>🏆 LIGA KALKULUS</h1>
 
     <div id="start-screen">
-        <p>Ejen Bijak, taip nama anda untuk mulakan seruan arena!</p>
+        <p style="font-size: 1.1rem; margin-bottom: 20px;">Ejen Bijak, masukkan ID anda untuk memulakan misi!</p>
         <input id="playerName" type="text" placeholder="Nama Anda..." autocomplete="off">
         <button class="btn-main" onclick="startGame()">MASUK ARENA</button>
     </div>
 
     <div id="game-screen" style="display:none">
-        <h2 id="levelTitle" style="color: var(--gold);"></h2>
+        <h2 id="levelTitle" style="color: var(--gold); margin: 0;"></h2>
         <div class="math-box" id="questionBox"></div>
-        <input id="answerInput" type="text" placeholder="Contoh: x^3-2x+5">
+        <input id="answerInput" type="text" placeholder="Formula jawapan (cth: x^3-2x+5)">
         <button class="btn-main" onclick="submitAnswer()">SERANG (HANTAR)</button>
         <button class="btn-hint" onclick="toggleHint()">BANTUAN HERO</button>
         <div class="hint-section" id="hintBox"></div>
@@ -152,120 +194,249 @@
 
     <div id="finish-screen" style="display:none">
         <div class="victory-title">VICTORY!</div>
-        <h2 style="color: #fff;">MISI SELESAI!</h2>
-        <p id="finalScoreText"></p>
-        <button class="btn-main" onclick="location.reload()">MAIN LAGI</button>
+        <h2 style="color: #fff; margin-top: 15px;">MISI SELESAI!</h2>
+        <p id="finalScoreText" style="font-size: 1.1rem;"></p>
+        <button class="btn-main" onclick="location.reload()">MAIN SEMULA</button>
     </div>
 </div>
 
 <div id="leaderboard">
-    <h3>Top Legends</h3>
-    <ul id="boardList" style="list-style: none; padding: 0;"></ul>
+    <h3 style="color: var(--gold); border-bottom: 1px solid #334155; padding-bottom: 10px;">TOP LEGENDS</h3>
+    <div id="boardList">
+        <p style="color: #64748b;">Memuatkan data arena...</p>
+    </div>
 </div>
 
-<!-- Audio Assets (MLBB Original Vibes) -->
-<audio id="sfx-welcome" preload="auto">
-    <source src="https://www.myinstants.com/media/sounds/welcome-to-mobile-legends-announcer.mp3" type="audio/mpeg">
-</audio>
-<audio id="sfx-correct" preload="auto">
-    <source src="https://www.myinstants.com/media/sounds/double-kill-ml.mp3" type="audio/mpeg">
-</audio>
-<audio id="sfx-wrong" preload="auto">
-    <source src="https://www.myinstants.com/media/sounds/mlbb-death.mp3" type="audio/mpeg">
-</audio>
-<audio id="sfx-victory" preload="auto">
-    <source src="https://www.myinstants.com/media/sounds/victory-mlbb.mp3" type="audio/mpeg">
-</audio>
-
 <script>
-const firebaseConfig = {
-    apiKey: "AIzaSyCtXEaVUfNLDQbeskXw-3EJ9KXUDynoBv8",
-    authDomain: "missioncalculusgame.firebaseapp.com",
-    databaseURL: "https://missioncalculusgame-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "missioncalculusgame",
-    appId: "1:674496394742:web:66157f59baf2614a6e83d7"
-};
+    const firebaseConfig = {
+        apiKey: "AIzaSyCtXEaVUfNLDQbeskXw-3EJ9KXUDynoBv8",
+        authDomain: "missioncalculusgame.firebaseapp.com",
+        databaseURL: "https://missioncalculusgame-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "missioncalculusgame",
+        appId: "1:674496394742:web:66157f59baf2614a6e83d7"
+    };
 
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+    // Initialize Firebase safely
+    let db = null;
+    let auth = null;
+    let isFirebaseActive = false;
 
-const levels = [
-    { question: `$\\frac{dy}{dx} = 3x^2 - 4x$. Melalui $(1, 2)$. Cari $y$.`, answer: "x^3-2x^2+3", hint: "Kamirkan jadi $x^3 - 2x^2 + C$. Masukkan (1,2) cari C." },
-    { question: `$\\frac{dy}{dx} = 2x + 5$. Melalui $(0, 4)$. Cari $y$.`, answer: "x^2+5x+4", hint: "Pintasan-y (0,4) bermaksud $C = 4$." },
-    { question: `$\\frac{dy}{dx} = 6x^2$. Melalui $(1, 5)$. Cari $y$.`, answer: "2x^3+3", hint: "Hasil kamiran: $2x^3 + C$. Selesaikan untuk C." }
-];
-
-let currentLevel = 0;
-let currentPlayer = "";
-
-function forcePlay(id) {
-    const audio = document.getElementById(id);
-    if (audio) {
-        audio.pause();
-        audio.currentTime = 0;
-        // Gunakan timeout kecil untuk memastikan audio sedia
-        setTimeout(() => {
-            audio.play().catch(e => console.log("Audio Error:", e));
-        }, 50);
+    try {
+        firebase.initializeApp(firebaseConfig);
+        db = firebase.database();
+        auth = firebase.auth();
+        isFirebaseActive = true;
+    } catch (e) {
+        console.warn("Firebase initialization failed:", e);
+        isFirebaseActive = false;
     }
-}
 
-function startGame() {
-    currentPlayer = document.getElementById("playerName").value.trim();
-    if (!currentPlayer) return alert("Sila taip nama!");
+    let audioCtx = null;
+    function initAudio() {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+    }
 
-    // Mainkan bunyi Welcome to MLBB
-    forcePlay('sfx-welcome');
+    function playSynth(type) {
+        if (!audioCtx) return;
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const now = audioCtx.currentTime;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
 
-    document.getElementById("start-screen").style.display = "none";
-    document.getElementById("game-screen").style.display = "block";
-    loadLevel();
-}
+        if (type === 'click') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(800, now);
+            osc.frequency.exponentialRampToValueAtTime(100, now + 0.1);
+            gain.gain.setValueAtTime(0.3, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+            osc.start(now);
+            osc.stop(now + 0.1);
+        } else if (type === 'correct') {
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(523.25, now);
+            osc.frequency.exponentialRampToValueAtTime(1046.50, now + 0.15);
+            gain.gain.setValueAtTime(0.3, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+            osc.start(now);
+            osc.stop(now + 0.4);
+        } else if (type === 'wrong') {
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(150, now);
+            osc.frequency.linearRampToValueAtTime(50, now + 0.2);
+            gain.gain.setValueAtTime(0.2, now);
+            gain.gain.linearRampToValueAtTime(0.01, now + 0.2);
+            osc.start(now);
+            osc.stop(now + 0.2);
+        } else if (type === 'whoosh') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(100, now);
+            osc.frequency.exponentialRampToValueAtTime(1600, now + 0.3);
+            gain.gain.setValueAtTime(0.1, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+            osc.start(now);
+            osc.stop(now + 0.3);
+        } else if (type === 'victory') {
+            const chord = [523.25, 659.25, 783.99, 1046.50];
+            chord.forEach((freq, i) => {
+                const o = audioCtx.createOscillator();
+                const g = audioCtx.createGain();
+                o.connect(g); g.connect(audioCtx.destination);
+                o.type = 'sine';
+                o.frequency.setValueAtTime(freq, now + (i * 0.1));
+                g.gain.setValueAtTime(0.2, now + (i * 0.1));
+                g.gain.exponentialRampToValueAtTime(0.01, now + (i * 0.1) + 0.8);
+                o.start(now + (i * 0.1));
+                o.stop(now + (i * 0.1) + 0.8);
+            });
+        }
+    }
 
-function loadLevel() {
-    const q = levels[currentLevel];
-    document.getElementById("levelTitle").innerText = "MISI " + (currentLevel + 1);
-    document.getElementById("questionBox").innerHTML = q.question;
-    document.getElementById("answerInput").value = "";
-    document.getElementById("statusMessage").innerText = "";
-    if (window.MathJax) MathJax.typesetPromise();
-}
+    const levels = [
+        { 
+            question: `$\\frac{dy}{dx} = 3x^2 - 4x$. Melalui titik $(1, 2)$. Cari persamaan $y$.`, 
+            answer: "x^3-2x^2+3", 
+            hint: "1. Kamirkan dy/dx untuk dapatkan $y = x^3 - 2x^2 + C$. <br>2. Masukkan $x=1, y=2$ untuk cari nilai C." 
+        },
+        { 
+            question: `$\\frac{dy}{dx} = 2x + 5$. Melalui titik $(0, 4)$. Cari persamaan $y$.`, 
+            answer: "x^2+5x+4", 
+            hint: "Apabila graf melalui titik $(0,4)$, ini bermakna pintasan-y (nilai C) adalah 4." 
+        },
+        { 
+            question: `$\\frac{dy}{dx} = 6x^2$. Melalui titik $(1, 5)$. Cari persamaan $y$.`, 
+            answer: "2x^3+3", 
+            hint: "Kamirkan $6x^2$ menjadi $2x^3 + C$. Kemudian selesaikan $2(1)^3 + C = 5$." 
+        }
+    ];
 
-function submitAnswer() {
-    const input = document.getElementById("answerInput");
-    const userAns = input.value.toLowerCase().replace(/\s/g, '');
-    const correctAns = levels[currentLevel].answer.toLowerCase().replace(/\s/g, '');
+    let currentLevel = 0;
+    let currentPlayer = "";
 
-    if (userAns === correctAns) {
-        forcePlay('sfx-correct'); // Double Kill
-        document.getElementById("statusMessage").style.color = "var(--success)";
-        document.getElementById("statusMessage").innerText = "🌟 BIJAK! TAHAP DITINGKATKAN!";
+    function showGame() {
+        document.getElementById("start-screen").style.display = "none";
+        document.getElementById("game-screen").style.display = "block";
+        loadLevel();
+    }
+
+    async function startGame() {
+        currentPlayer = document.getElementById("playerName").value.trim();
+        if (!currentPlayer) return alert("Ejen, sila masukkan nama anda!");
+
+        initAudio();
+        playSynth('click');
+
+        if (isFirebaseActive && auth) {
+            try {
+                // Wait for auth, but move forward even if configuration is missing
+                await auth.signInAnonymously();
+                showGame();
+            } catch (err) {
+                console.warn("Auth failed, starting in local mode:", err);
+                showGame();
+            }
+        } else {
+            showGame();
+        }
+    }
+
+    function loadLevel() {
+        const q = levels[currentLevel];
+        document.getElementById("levelTitle").innerText = "MISI " + (currentLevel + 1);
+        document.getElementById("questionBox").innerHTML = q.question;
+        document.getElementById("answerInput").value = "";
+        document.getElementById("statusMessage").innerText = "";
+        document.getElementById("hintBox").style.display = "none";
+        if (window.MathJax) MathJax.typesetPromise();
+    }
+
+    function submitAnswer() {
+        const input = document.getElementById("answerInput");
+        const userAns = input.value.toLowerCase().replace(/\s/g, '');
+        const correctAns = levels[currentLevel].answer.toLowerCase().replace(/\s/g, '');
+
+        if (userAns === correctAns) {
+            playSynth('correct');
+            document.getElementById("statusMessage").style.color = "var(--success)";
+            document.getElementById("statusMessage").innerText = "🌟 TEPAT! MARA KE HADAPAN!";
+            
+            currentLevel++;
+            if (currentLevel >= levels.length) {
+                setTimeout(finishGame, 1000);
+            } else {
+                setTimeout(() => {
+                    playSynth('whoosh');
+                    loadLevel();
+                }, 1300);
+            }
+        } else {
+            playSynth('wrong');
+            if ("vibrate" in navigator) navigator.vibrate(200);
+            input.classList.add("shake");
+            setTimeout(() => input.classList.remove("shake"), 500);
+            document.getElementById("statusMessage").style.color = "var(--danger)";
+            document.getElementById("statusMessage").innerText = "❌ DATA TIDAK PADAN! CUBA LAGI.";
+        }
+    }
+
+    function finishGame() {
+        playSynth('victory');
         
-        currentLevel++;
-        if (currentLevel >= levels.length) setTimeout(finishGame, 1000);
-        else setTimeout(loadLevel, 1500);
-    } else {
-        forcePlay('sfx-wrong'); // Death sound
-        if ("vibrate" in navigator) navigator.vibrate(200);
-        input.classList.add("shake");
-        setTimeout(() => input.classList.remove("shake"), 500);
-        document.getElementById("statusMessage").style.color = "var(--danger)";
-        document.getElementById("statusMessage").innerText = "❌ SALAH! CUBA LAGI.";
+        if (isFirebaseActive && db) {
+            try {
+                db.ref('leaderboard').push({
+                    name: currentPlayer,
+                    timestamp: Date.now()
+                });
+            } catch (e) {
+                console.error("Gagal simpan skor:", e);
+            }
+        }
+
+        document.getElementById("game-screen").style.display = "none";
+        document.getElementById("finish-screen").style.display = "block";
+        document.getElementById("finalScoreText").innerText = `Ejen ${currentPlayer}, anda telah berjaya menamatkan semua misi arena!`;
     }
-}
 
-function finishGame() {
-    forcePlay('sfx-victory');
-    document.getElementById("game-screen").style.display = "none";
-    document.getElementById("finish-screen").style.display = "block";
-    document.getElementById("finalScoreText").innerText = `Ejen ${currentPlayer}, anda adalah lagenda matematik!`;
-}
+    function toggleHint() {
+        const h = document.getElementById("hintBox");
+        h.innerHTML = levels[currentLevel].hint;
+        h.style.display = h.style.display === "none" ? "block" : "none";
+        if (window.MathJax) MathJax.typesetPromise();
+    }
 
-function toggleHint() {
-    const h = document.getElementById("hintBox");
-    h.innerHTML = levels[currentLevel].hint;
-    h.style.display = h.style.display === "none" ? "block" : "none";
-}
+    // Display Real-time Leaderboard
+    if (isFirebaseActive && db) {
+        db.ref('leaderboard').limitToLast(10).on('value', (snapshot) => {
+            const listContainer = document.getElementById("boardList");
+            listContainer.innerHTML = "";
+            const results = [];
+            snapshot.forEach(child => results.push(child.val()));
+            
+            if (results.length === 0) {
+                listContainer.innerHTML = "<p style='color: #64748b;'>Tiada rekod lagi. Jadilah yang pertama!</p>";
+                return;
+            }
+
+            results.reverse().forEach((data, i) => {
+                const div = document.createElement("div");
+                div.className = "list-item";
+                div.innerHTML = `
+                    <span><b style="color:var(--gold)">#${i+1}</b> ${data.name}</span>
+                    <span style="color:#64748b; font-size:0.8rem">Tamat Misi</span>
+                `;
+                listContainer.appendChild(div);
+            });
+        }, (err) => {
+            console.warn("Leaderboard fetch failed (permissions/config):", err);
+            document.getElementById("boardList").innerHTML = "<p style='color: #64748b;'>Leaderboard tidak dapat dipaparkan (Offline).</p>";
+        });
+    } else {
+        document.getElementById("boardList").innerHTML = "<p style='color: #64748b;'>Mod Arena Tempatan Aktif.</p>";
+    }
 </script>
 </body>
 </html>

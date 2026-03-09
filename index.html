@@ -1,23 +1,26 @@
 <!DOCTYPE html>
-<html>
+<html lang="ms">
 <head>
 <meta charset="UTF-8">
 <title>Mission Calculus Escape</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<style>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
+<style>
 body{
 font-family:Arial, sans-serif;
 background:#0f172a;
 color:white;
-text-align:center;
 margin:0;
 padding:20px;
+text-align:center;
 }
 
 .container{
-max-width:600px;
+max-width:700px;
 margin:auto;
 background:#1e293b;
 padding:25px;
@@ -26,19 +29,36 @@ box-shadow:0 0 15px rgba(0,0,0,0.4);
 }
 
 h1{
-font-size:28px;
-margin-bottom:10px;
+color:#38bdf8;
+}
+
+.math{
+font-size:22px;
+background:#020617;
+padding:15px;
+border-radius:8px;
+margin:15px 0;
+line-height:1.6;
+}
+
+input{
+width:100%;
+padding:12px;
+font-size:18px;
+border-radius:6px;
+border:none;
+margin-top:10px;
 }
 
 button{
+width:100%;
 padding:12px;
 margin-top:10px;
-font-size:18px;
+font-size:17px;
 border:none;
 border-radius:8px;
 background:#22c55e;
 color:white;
-width:100%;
 cursor:pointer;
 }
 
@@ -46,18 +66,17 @@ button:hover{
 background:#16a34a;
 }
 
-input{
+.hint{
+background:#1e40af;
 padding:12px;
-font-size:18px;
-width:100%;
+border-radius:8px;
 margin-top:10px;
-border-radius:6px;
-border:none;
+display:none;
 }
 
-#leaderboard{
+.message{
 margin-top:10px;
-font-size:16px;
+font-weight:bold;
 }
 
 footer{
@@ -66,18 +85,33 @@ font-size:14px;
 color:#cbd5f5;
 }
 
-@media (max-width:600px){
-
-h1{
-font-size:22px;
+#leaderboard{
+margin-top:20px;
+text-align:left;
+background:#1e293b;
+padding:15px;
+border-radius:8px;
 }
 
-button{
-font-size:16px;
+#leaderboard h3{
+color:#38bdf8;
 }
 
+#leaderboard ul{
+list-style:none;
+padding:0;
 }
 
+#leaderboard li{
+padding:5px 0;
+border-bottom:1px solid #334155;
+}
+
+@media(max-width:600px){
+.math{
+font-size:19px;
+}
+}
 </style>
 </head>
 
@@ -88,32 +122,37 @@ font-size:16px;
 <h1>Mission Calculus Escape</h1>
 
 <div id="start">
-
-<input id="playerName" placeholder="Masukkan nama anda">
-<button onclick="startGame()">Start Mission</button>
-
+<p>Masukkan nama pelajar untuk memulakan misi.</p>
+<input id="playerName" placeholder="Nama anda">
+<button onclick="startGame()">Mula Misi</button>
 </div>
 
 <div id="game" style="display:none">
 
 <h2 id="levelTitle"></h2>
-<p id="question"></p>
 
-<input id="answer" placeholder="Jawapan anda">
-<button onclick="submitAnswer()">Submit</button>
+<div class="math" id="question"></div>
 
-<p id="message"></p>
+<input id="answer" placeholder="Contoh jawapan: x^2 + 2x + 2">
+
+<button onclick="submitAnswer()">Hantar Jawapan</button>
+
+<button onclick="showHint()">Lihat Panduan</button>
+
+<div class="hint" id="hint"></div>
+
+<div class="message" id="message"></div>
 
 </div>
 
 <div id="finish" style="display:none">
+<h2>Misi Selesai</h2>
+<p id="score"></p>
+</div>
 
-<h2>Mission Complete</h2>
-<p id="finalScore"></p>
-
+<div id="leaderboard">
 <h3>Leaderboard</h3>
-<div id="leaderboard"></div>
-
+<ul id="boardList"></ul>
 </div>
 
 </div>
@@ -121,8 +160,6 @@ font-size:16px;
 <footer>
 Aplikasi ini dihasilkan oleh <b>Cikgu Anis</b> – Kolej Vokasional Kajang
 </footer>
-
-<!-- SOUND -->
 
 <audio id="correctSound">
 <source src="https://assets.mixkit.co/sfx/preview/mixkit-correct-answer-tone-2870.mp3">
@@ -137,143 +174,146 @@ Aplikasi ini dihasilkan oleh <b>Cikgu Anis</b> – Kolej Vokasional Kajang
 </audio>
 
 <script>
-
-const levels = [
-
-{question:"Derivative of x² ?",answer:"2x"},
-{question:"Derivative of 3x² ?",answer:"6x"},
-{question:"Derivative of sin(x) ?",answer:"cos(x)"},
-{question:"Derivative of cos(x) ?",answer:"-sin(x)"},
-{question:"Integral of 2x dx ?",answer:"x^2"}
-
-]
-
-let currentLevel=0
-let player=""
-
-function startGame(){
-
-player=document.getElementById("playerName").value
-
-if(player===""){
-alert("Sila masukkan nama")
-return
-}
-
-document.getElementById("start").style.display="none"
-document.getElementById("game").style.display="block"
-
-loadLevel()
-
-}
-
-function loadLevel(){
-
-document.getElementById("levelTitle").innerText="Level "+(currentLevel+1)
-document.getElementById("question").innerText=levels[currentLevel].question
-document.getElementById("answer").value=""
-document.getElementById("message").innerText=""
-
-}
-
-function submitAnswer(){
-
-let ans=document.getElementById("answer").value
-
-if(ans===levels[currentLevel].answer){
-
-document.getElementById("correctSound").play()
-
-currentLevel++
-
-if(currentLevel>=levels.length){
-
-finishGame()
-
-}else{
-
-document.getElementById("message").innerText="Betul! Teruskan ke level seterusnya."
-loadLevel()
-
-}
-
-}else{
-
-document.getElementById("wrongSound").play()
-document.getElementById("message").innerText="Jawapan salah. Cuba lagi."
-
-}
-
-}
-
-function finishGame(){
-
-document.getElementById("winSound").play()
-
-document.getElementById("game").style.display="none"
-document.getElementById("finish").style.display="block"
-
-let score=levels.length
-
-document.getElementById("finalScore").innerText="Score: "+score
-
-saveScore(player,score)
-loadLeaderboard()
-
-}
-
-</script>
-
-<!-- FIREBASE -->
-
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
-
-<script>
-
+// Firebase configuration - Gantikan dengan config project anda
 const firebaseConfig = {
-
- apiKey: "AIzaSyCtXEaVUfNLDQbeskXw-3EJ9KXUDynoBv8",
+   apiKey: "AIzaSyCtXEaVUfNLDQbeskXw-3EJ9KXUDynoBv8",
   authDomain: "missioncalculusgame.firebaseapp.com",
   databaseURL: "https://missioncalculusgame-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId: "missioncalculusgame",
   storageBucket: "missioncalculusgame.firebasestorage.app",
   messagingSenderId: "674496394742",
   appId: "1:674496394742:web:66157f59baf2614a6e83d7"
+};
+
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+const database = firebase.database();
+
+const levels=[
+{
+question:"Diberi dy/dx = 2x + 2 dan y = 1 apabila x = -1.<br><br>Ungkap y dalam sebutan x.<br><br>∫(2x + 2) dx",
+answer:"x^2+2x+2",
+hint:"Langkah 1: Kamiran 2x + 2 ialah x<sup>2</sup> + 2x + C.<br>Langkah 2: Guna syarat y = 1 apabila x = -1 untuk mencari nilai C."
+},
+{
+question:"Cari terbitan bagi fungsi berikut:<br><br>y = x<sup>2</sup>",
+answer:"2x",
+hint:"Gunakan peraturan kuasa:<br>d/dx (x<sup>n</sup>) = n x<sup>n-1</sup>"
+},
+{
+question:"Cari terbitan bagi:<br><br>y = 3x<sup>2</sup>",
+answer:"6x",
+hint:"Terbitkan dahulu x<sup>2</sup> menjadi 2x kemudian darab dengan 3."
+},
+{
+question:"Cari terbitan bagi:<br><br>y = sin(x)",
+answer:"cos(x)",
+hint:"Formula asas:<br>d/dx sin(x) = cos(x)"
+},
+{
+question:"Cari kamiran berikut:<br><br>∫ 2x dx",
+answer:"x^2",
+hint:"Gunakan formula:<br>∫ x<sup>n</sup> dx = x<sup>n+1</sup> / (n+1)"
+}
+]
+
+let level=0;
+let player="";
+
+function startGame(){
+  player=document.getElementById("playerName").value
+  if(player===""){
+    alert("Sila masukkan nama dahulu")
+    return
+  }
+
+  // Simpan nama pelajar di Firebase jika baru
+  firebase.database().ref('players/'+player).set({
+    name: player,
+    startTime: Date.now(),
+    level: 0,
+    finished: false
+  });
+
+  document.getElementById("start").style.display="none"
+  document.getElementById("game").style.display="block"
+  loadLevel()
 }
 
-firebase.initializeApp(firebaseConfig)
-
-const db=firebase.database()
-
-function saveScore(name,score){
-
-db.ref("leaderboard").push({
-name:name,
-score:score
-})
-
+function loadLevel(){
+  document.getElementById("levelTitle").innerText="Soalan "+(level+1)
+  document.getElementById("question").innerHTML=levels[level].question
+  document.getElementById("answer").value=""
+  document.getElementById("hint").style.display="none"
+  document.getElementById("hint").innerHTML=levels[level].hint
+  document.getElementById("message").innerText=""
 }
 
+function showHint(){
+  document.getElementById("hint").style.display="block"
+}
+
+function normalize(text){
+  return text.replace(/\s/g,"").toLowerCase().replace("²","^2").replace("³","^3")
+}
+
+function submitAnswer(){
+  let ans=normalize(document.getElementById("answer").value)
+  let correct=normalize(levels[level].answer)
+
+  if(ans===correct){
+    document.getElementById("correctSound").play()
+    level++
+
+    // Update level di Firebase
+    firebase.database().ref('players/'+player).update({
+      level: level
+    });
+
+    if(level>=levels.length){
+      finishGame()
+    }else{
+      document.getElementById("message").innerText="Jawapan betul. Teruskan ke soalan seterusnya."
+      loadLevel()
+    }
+  }else{
+    document.getElementById("wrongSound").play()
+    document.getElementById("message").innerText="Jawapan kurang tepat. Cuba lagi atau tekan Panduan."
+  }
+}
+
+function finishGame(){
+  document.getElementById("winSound").play()
+  document.getElementById("game").style.display="none"
+  document.getElementById("finish").style.display="block"
+  document.getElementById("score").innerText="Tahniah "+player+"! Anda telah menyelesaikan semua soalan."
+
+  // Update status selesai di Firebase
+  firebase.database().ref('players/'+player).update({
+    finished: true,
+    finishTime: Date.now()
+  });
+}
+
+// --- Leaderboard ---
 function loadLeaderboard(){
-
-db.ref("leaderboard").once("value",function(snapshot){
-
-let data=snapshot.val()
-let html=""
-
-for(let id in data){
-
-html+=data[id].name+" : "+data[id].score+"<br>"
-
+  const board = document.getElementById("boardList")
+  database.ref('players').orderByChild('level').limitToLast(50).on('value', snapshot => {
+    board.innerHTML = ""
+    const data = snapshot.val()
+    if(data){
+      // Tukar ke array dan urut descending
+      const arr = Object.values(data).sort((a,b)=>b.level - a.level || a.startTime - b.startTime)
+      arr.forEach(p=>{
+        const li = document.createElement('li')
+        li.innerHTML = `<b>${p.name}</b> - Level ${p.level}${p.finished?" ✅":" ❌"}`
+        board.appendChild(li)
+      })
+    }
+  })
 }
 
-document.getElementById("leaderboard").innerHTML=html
-
-})
-
-}
-
+loadLeaderboard()
 </script>
 
 </body>

@@ -2,43 +2,36 @@
 <html lang="ms">
 <head>
     <meta charset="UTF-8">
-    <title>Pengamiran: Mencari Persamaan Lengkung</title>
+    <title>Misi Pengamiran: Persamaan Lengkung</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <!-- MathJax for rendering Mathematics -->
+    <!-- MathJax -->
     <script>
         window.MathJax = {
-            tex: {
-                inlineMath: [['$', '$'], ['\\(', '\\)']],
-                displayMath: [['$$', '$$'], ['\\[', '\\]']]
-            },
-            svg: {
-                fontCache: 'global'
-            }
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
+            svg: { fontCache: 'global' }
         };
     </script>
     <script type="text/javascript" id="MathJax-script" async
         src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
     </script>
 
-    <!-- Firebase SDK (Compat Version) -->
+    <!-- Firebase SDK (Compat) -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
     <style>
         :root {
-            --bg-dark: #0f172a;
-            --card-bg: #1e293b;
-            --primary: #38bdf8;
+            --bg-dark: #020617;
+            --gold: #fbbf24;
             --success: #22c55e;
             --danger: #ef4444;
-            --accent: #1e40af;
             --text-white: #f8fafc;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: var(--bg-dark);
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            background: radial-gradient(circle at center, #1e293b 0%, #020617 100%);
             color: var(--text-white);
             margin: 0;
             padding: 20px;
@@ -51,282 +44,178 @@
         .container {
             width: 100%;
             max-width: 650px;
-            background: var(--card-bg);
+            background: rgba(30, 41, 59, 0.9);
+            backdrop-filter: blur(10px);
             padding: 30px;
-            border-radius: 16px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            border-radius: 20px;
+            box-shadow: 0 0 40px rgba(56, 189, 248, 0.2);
             text-align: center;
+            border: 2px solid rgba(251, 191, 36, 0.4);
         }
 
         h1 {
-            color: var(--primary);
-            margin-bottom: 25px;
-            font-size: 1.8rem;
+            color: var(--gold);
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
         }
 
         .math-box {
             font-size: 20px;
-            background: #020617;
-            padding: 20px;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 25px;
             border-radius: 12px;
             margin: 20px 0;
-            line-height: 1.8;
-            border-left: 4px solid var(--primary);
+            border-left: 5px solid var(--gold);
             text-align: left;
         }
 
         input {
             width: 100%;
-            padding: 14px;
+            padding: 16px;
             font-size: 18px;
-            border-radius: 8px;
+            border-radius: 10px;
             border: 2px solid #334155;
             background: #0f172a;
             color: white;
-            box-sizing: border-box;
-            transition: all 0.3s;
+            text-align: center;
+            margin-bottom: 10px;
         }
 
-        input:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
-        }
-
-        /* Animation for wrong answer */
-        .shake {
-            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
-            border-color: var(--danger) !important;
-        }
-
+        .shake { animation: shake 0.4s ease-in-out; border-color: var(--danger); }
         @keyframes shake {
-            10%, 90% { transform: translate3d(-1px, 0, 0); }
-            20%, 80% { transform: translate3d(2px, 0, 0); }
-            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
-            40%, 60% { transform: translate3d(4px, 0, 0); }
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
         }
 
         button {
             width: 100%;
-            padding: 14px;
-            margin-top: 12px;
+            padding: 15px;
+            margin-top: 10px;
             font-size: 16px;
-            font-weight: bold;
+            font-weight: 800;
             border: none;
-            border-radius: 8px;
+            border-radius: 10px;
             cursor: pointer;
-            transition: transform 0.1s, opacity 0.3s;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 10px;
+            text-transform: uppercase;
+            transition: 0.2s;
         }
 
-        .btn-main { background: var(--success); color: white; }
-        .btn-hint { background: var(--accent); color: white; }
-        
-        button:hover { opacity: 0.9; }
+        .btn-main { background: linear-gradient(135deg, #fbbf24, #d97706); color: #020617; }
+        .btn-hint { background: #38bdf8; color: white; }
         button:active { transform: scale(0.98); }
 
         .hint-section {
-            background: #1e3a8a;
+            background: rgba(30, 64, 175, 0.3);
             padding: 15px;
-            border-radius: 8px;
+            border-radius: 10px;
             margin-top: 15px;
             display: none;
-            text-align: left;
-            font-size: 15px;
-            border: 1px dashed var(--primary);
-            animation: fadeIn 0.5s;
+            border: 1px dashed var(--gold);
         }
 
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-        .message {
-            margin-top: 15px;
-            font-weight: 600;
-            min-height: 24px;
-            font-size: 1.1rem;
-        }
+        .message { margin-top: 20px; font-weight: 900; font-size: 1.5rem; height: 30px; }
 
         #leaderboard {
             margin-top: 30px;
             width: 100%;
             max-width: 650px;
-            text-align: left;
-            background: var(--card-bg);
-            padding: 20px;
-            border-radius: 16px;
+            background: rgba(15, 23, 42, 0.8);
+            padding: 15px;
+            border-radius: 15px;
         }
 
-        #leaderboard h3 {
-            color: var(--primary);
-            border-bottom: 1px solid #334155;
-            padding-bottom: 10px;
-            margin-top: 0;
-        }
-
-        #boardList {
-            list-style: none;
-            padding: 0;
-            max-height: 250px;
-            overflow-y: auto;
-        }
-
-        #boardList li {
-            padding: 10px;
-            border-bottom: 1px solid #334155;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .celebration {
-            font-size: 3rem;
-            margin: 10px 0;
-        }
-
-        footer {
-            margin-top: 40px;
-            font-size: 13px;
-            color: #94a3b8;
-            text-align: center;
-            padding-bottom: 20px;
-        }
-
-        @media(max-width:500px){
-            .container { padding: 20px; }
-            h1 { font-size: 1.3rem; }
-        }
+        .victory-title { font-size: 4rem; color: var(--gold); font-weight: 900; font-style: italic; }
     </style>
 </head>
-
 <body>
 
 <div class="container">
-    <h1>🚀 Misi Kalkulus</h1>
+    <h1>🏆 Liga Kalkulus</h1>
 
-    <!-- Start Screen -->
     <div id="start-screen">
-        <p>Ejen, masukkan nama anda untuk memulakan misi pengamiran.</p>
-        <input id="playerName" type="text" placeholder="Nama Ejen..." autocomplete="off">
-        <button class="btn-main" onclick="startGame()">MULA MISI</button>
+        <p>Ejen Bijak, taip nama anda untuk mulakan seruan arena!</p>
+        <input id="playerName" type="text" placeholder="Nama Anda..." autocomplete="off">
+        <button class="btn-main" onclick="startGame()">MASUK ARENA</button>
     </div>
 
-    <!-- Game Screen -->
     <div id="game-screen" style="display:none">
-        <h2 id="levelTitle" style="color: var(--primary); margin-top:0;"></h2>
+        <h2 id="levelTitle" style="color: var(--gold);"></h2>
         <div class="math-box" id="questionBox"></div>
-        
-        <p style="text-align: left; font-size: 14px; margin-bottom: 5px; color: #94a3b8;">Taip jawapan anda:</p>
-        <input id="answerInput" type="text" placeholder="Contoh: x^2 + 5x + C">
-        
-        <button class="btn-main" onclick="submitAnswer()">HANTAR JAWAPAN</button>
-        <button class="btn-hint" onclick="toggleHint()">BANTUAN TEKNIKAL</button>
-
+        <input id="answerInput" type="text" placeholder="Contoh: x^3-2x+5">
+        <button class="btn-main" onclick="submitAnswer()">SERANG (HANTAR)</button>
+        <button class="btn-hint" onclick="toggleHint()">BANTUAN HERO</button>
         <div class="hint-section" id="hintBox"></div>
         <div class="message" id="statusMessage"></div>
     </div>
 
-    <!-- Finish Screen -->
     <div id="finish-screen" style="display:none">
-        <div class="celebration">🎉</div>
-        <h2 style="color: var(--success); margin: 0;">MISSION ACCOMPLISHED!</h2>
-        <p style="font-size: 1.2rem; margin: 15px 0;">HORREY!</p>
-        <p id="finalScoreText" style="color: #cbd5e1;"></p>
-        <button class="btn-main" onclick="location.reload()">MISI BARU</button>
+        <div class="victory-title">VICTORY!</div>
+        <h2 style="color: #fff;">MISI SELESAI!</h2>
+        <p id="finalScoreText"></p>
+        <button class="btn-main" onclick="location.reload()">MAIN LAGI</button>
     </div>
 </div>
 
 <div id="leaderboard">
-    <h3>Papan Skor Ejen Terbaik</h3>
-    <ul id="boardList">
-        <li style="color: #94a3b8;">Memuatkan data sistem...</li>
-    </ul>
+    <h3>Top Legends</h3>
+    <ul id="boardList" style="list-style: none; padding: 0;"></ul>
 </div>
 
-<footer>
-    Aplikasi Pendidikan Digital oleh <b>Cikgu Anis</b><br>Kolej Vokasional Kajang
-</footer>
-
-<!-- Audio Assets -->
-<!-- Betul: Sound chime/ding -->
+<!-- Audio Assets (MLBB Original Vibes) -->
+<audio id="sfx-welcome" preload="auto">
+    <source src="https://www.myinstants.com/media/sounds/welcome-to-mobile-legends-announcer.mp3" type="audio/mpeg">
+</audio>
 <audio id="sfx-correct" preload="auto">
-    <source src="https://assets.mixkit.co/sfx/preview/mixkit-positive-interface-click-1112.mp3">
+    <source src="https://www.myinstants.com/media/sounds/double-kill-ml.mp3" type="audio/mpeg">
 </audio>
-<!-- Salah: Game Buzzer -->
 <audio id="sfx-wrong" preload="auto">
-    <source src="https://assets.mixkit.co/sfx/preview/mixkit-wrong-answer-buzzer-948.mp3">
+    <source src="https://www.myinstants.com/media/sounds/mlbb-death.mp3" type="audio/mpeg">
 </audio>
-<!-- Menang: Crowd Cheer & Win Horn -->
-<audio id="sfx-win" preload="auto">
-    <source src="https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.mp3">
-</audio>
-<audio id="sfx-cheer" preload="auto">
-    <source src="https://assets.mixkit.co/sfx/preview/mixkit-human-crowd-celebration-cheer-451.mp3">
+<audio id="sfx-victory" preload="auto">
+    <source src="https://www.myinstants.com/media/sounds/victory-mlbb.mp3" type="audio/mpeg">
 </audio>
 
 <script>
-// Firebase Config
 const firebaseConfig = {
     apiKey: "AIzaSyCtXEaVUfNLDQbeskXw-3EJ9KXUDynoBv8",
     authDomain: "missioncalculusgame.firebaseapp.com",
     databaseURL: "https://missioncalculusgame-default-rtdb.asia-southeast1.firebasedatabase.app",
     projectId: "missioncalculusgame",
-    storageBucket: "missioncalculusgame.firebasestorage.app",
-    messagingSenderId: "674496394742",
     appId: "1:674496394742:web:66157f59baf2614a6e83d7"
 };
 
-// Initialize
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
 const levels = [
-    {
-        question: `Fungsi kecerunan suatu lengkung ialah $\\frac{dy}{dx} = 3x^2 - 4x$. Lengkung itu melalui titik $(1, 2)$. Cari persamaan lengkung tersebut.`,
-        answer: "x^3-2x^2+3",
-        hint: `<b>Langkah 1:</b> Kamirkan fungsi kecerunan:<br>$y = \\int (3x^2 - 4x) \\, dx = x^3 - 2x^2 + C$<br><br><b>Langkah 2:</b> Ganti titik $(1, 2)$ ke dalam $y$:<br>$2 = (1)^3 - 2(1)^2 + C \\Rightarrow C = 3$`
-    },
-    {
-        question: `Diberi $\\frac{dy}{dx} = 2x + 5$ dan lengkung melalui titik $(0, 4)$. Cari persamaan lengkung tersebut.`,
-        answer: "x^2+5x+4",
-        hint: `Kamirkan $2x+5$ untuk dapat $x^2 + 5x + C$. Guna $(0,4)$ untuk cari $C$.`
-    },
-    {
-        question: `Cari persamaan lengkung jika $\\frac{dy}{dx} = 6x^2$ dan melalui titik $(1, 5)$.`,
-        answer: "2x^3+3",
-        hint: `$\\int 6x^2 dx = 2x^3 + C$. Masukkan nilai $x=1, y=5$ untuk dapatkan $C=3$.`
-    },
-    {
-        question: `Diberi kecerunan lengkung ialah $4x - 1$. Jika lengkung memintas paksi-y pada $y = 7$, cari persamaannya.`,
-        answer: "2x^2-x+7",
-        hint: `Pintasan-y bermaksud $x=0, y=7$. Kamirkan $4x-1$ dahulu.`
-    },
-    {
-        question: `Kamirkan fungsi $\\frac{dy}{dx} = 10x^4 - 2$ yang melalui titik $(1, 0)$.`,
-        answer: "2x^5-2x",
-        hint: `Hasil kamiran: $2x^5 - 2x + C$. Ganti $(1,0)$, maka $C=0$.`
-    }
+    { question: `$\\frac{dy}{dx} = 3x^2 - 4x$. Melalui $(1, 2)$. Cari $y$.`, answer: "x^3-2x^2+3", hint: "Kamirkan jadi $x^3 - 2x^2 + C$. Masukkan (1,2) cari C." },
+    { question: `$\\frac{dy}{dx} = 2x + 5$. Melalui $(0, 4)$. Cari $y$.`, answer: "x^2+5x+4", hint: "Pintasan-y (0,4) bermaksud $C = 4$." },
+    { question: `$\\frac{dy}{dx} = 6x^2$. Melalui $(1, 5)$. Cari $y$.`, answer: "2x^3+3", hint: "Hasil kamiran: $2x^3 + C$. Selesaikan untuk C." }
 ];
 
 let currentLevel = 0;
 let currentPlayer = "";
 
+function forcePlay(id) {
+    const audio = document.getElementById(id);
+    if (audio) {
+        audio.pause();
+        audio.currentTime = 0;
+        // Gunakan timeout kecil untuk memastikan audio sedia
+        setTimeout(() => {
+            audio.play().catch(e => console.log("Audio Error:", e));
+        }, 50);
+    }
+}
+
 function startGame() {
     currentPlayer = document.getElementById("playerName").value.trim();
-    if (currentPlayer === "") {
-        alert("Sila masukkan nama ejen!");
-        return;
-    }
+    if (!currentPlayer) return alert("Sila taip nama!");
 
-    db.ref('players/' + currentPlayer).set({
-        name: currentPlayer,
-        startTime: Date.now(),
-        level: 0,
-        finished: false
-    });
+    // Mainkan bunyi Welcome to MLBB
+    forcePlay('sfx-welcome');
 
     document.getElementById("start-screen").style.display = "none";
     document.getElementById("game-screen").style.display = "block";
@@ -338,102 +227,45 @@ function loadLevel() {
     document.getElementById("levelTitle").innerText = "MISI " + (currentLevel + 1);
     document.getElementById("questionBox").innerHTML = q.question;
     document.getElementById("answerInput").value = "";
-    document.getElementById("answerInput").classList.remove("shake");
-    document.getElementById("hintBox").innerHTML = q.hint;
-    document.getElementById("hintBox").style.display = "none";
     document.getElementById("statusMessage").innerText = "";
-    
-    if (window.MathJax) {
-        MathJax.typesetPromise();
-    }
-}
-
-function toggleHint() {
-    const box = document.getElementById("hintBox");
-    box.style.display = (box.style.display === "none") ? "block" : "none";
-}
-
-function normalize(text) {
-    return text.toLowerCase().replace(/\s+/g, '').replace(/[²^2]/g, '^2').replace(/[³^3]/g, '^3').replace('y=', '').replace('+c','');
+    if (window.MathJax) MathJax.typesetPromise();
 }
 
 function submitAnswer() {
-    const inputField = document.getElementById("answerInput");
-    const userAns = normalize(inputField.value);
-    const correctAns = normalize(levels[currentLevel].answer);
+    const input = document.getElementById("answerInput");
+    const userAns = input.value.toLowerCase().replace(/\s/g, '');
+    const correctAns = levels[currentLevel].answer.toLowerCase().replace(/\s/g, '');
 
     if (userAns === correctAns) {
-        // Bunyi Betul
-        document.getElementById("sfx-correct").currentTime = 0;
-        document.getElementById("sfx-correct").play();
+        forcePlay('sfx-correct'); // Double Kill
+        document.getElementById("statusMessage").style.color = "var(--success)";
+        document.getElementById("statusMessage").innerText = "🌟 BIJAK! TAHAP DITINGKATKAN!";
         
         currentLevel++;
-        inputField.classList.remove("shake");
-
-        db.ref('players/' + currentPlayer).update({
-            level: currentLevel
-        });
-
-        if (currentLevel >= levels.length) {
-            finishGame();
-        } else {
-            document.getElementById("statusMessage").style.color = "var(--success)";
-            document.getElementById("statusMessage").innerText = "✅ TEPAT SEKALI!";
-            setTimeout(loadLevel, 1000);
-        }
+        if (currentLevel >= levels.length) setTimeout(finishGame, 1000);
+        else setTimeout(loadLevel, 1500);
     } else {
-        // Bunyi Buzzer & Gegaran
-        document.getElementById("sfx-wrong").currentTime = 0;
-        document.getElementById("sfx-wrong").play();
-        
-        inputField.classList.add("shake");
-        setTimeout(() => inputField.classList.remove("shake"), 500);
-
+        forcePlay('sfx-wrong'); // Death sound
+        if ("vibrate" in navigator) navigator.vibrate(200);
+        input.classList.add("shake");
+        setTimeout(() => input.classList.remove("shake"), 500);
         document.getElementById("statusMessage").style.color = "var(--danger)";
-        document.getElementById("statusMessage").innerText = "❌ JAWAPAN SALAH. CUBA LAGI!";
+        document.getElementById("statusMessage").innerText = "❌ SALAH! CUBA LAGI.";
     }
 }
 
 function finishGame() {
-    // Bunyi Kemenangan & Sorakan
-    document.getElementById("sfx-win").play();
-    setTimeout(() => {
-        document.getElementById("sfx-cheer").play();
-    }, 500);
-
+    forcePlay('sfx-victory');
     document.getElementById("game-screen").style.display = "none";
     document.getElementById("finish-screen").style.display = "block";
-    document.getElementById("finalScoreText").innerText = `Tahniah Ejen ${currentPlayer}! Anda telah melengkapkan semua misi dengan cemerlang.`;
-
-    db.ref('players/' + currentPlayer).update({
-        finished: true,
-        finishTime: Date.now()
-    });
+    document.getElementById("finalScoreText").innerText = `Ejen ${currentPlayer}, anda adalah lagenda matematik!`;
 }
 
-function loadLeaderboard() {
-    const list = document.getElementById("boardList");
-    db.ref('players').orderByChild('level').limitToLast(10).on('value', snapshot => {
-        list.innerHTML = "";
-        const data = snapshot.val();
-        if (data) {
-            const players = Object.values(data).sort((a, b) => {
-                if (b.level !== a.level) return b.level - a.level;
-                return (a.finishTime || 9999999999999) - (b.finishTime || 9999999999999);
-            });
-            
-            players.forEach((p, index) => {
-                const li = document.createElement('li');
-                const status = p.finished ? "⭐ SELESAI" : `Tahap ${p.level}`;
-                li.innerHTML = `<span>${index + 1}. <b>${p.name}</b></span> <span style="color:var(--primary)">${status}</span>`;
-                list.appendChild(li);
-            });
-        }
-    });
+function toggleHint() {
+    const h = document.getElementById("hintBox");
+    h.innerHTML = levels[currentLevel].hint;
+    h.style.display = h.style.display === "none" ? "block" : "none";
 }
-
-loadLeaderboard();
 </script>
-
 </body>
 </html>

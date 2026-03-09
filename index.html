@@ -2,7 +2,7 @@
 <html lang="ms">
 <head>
 <meta charset="UTF-8">
-<title>Mission Calculus Escape</title>
+<title>Pengamiran: Mencari Persamaan Lengkung</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <!-- Firebase SDK -->
@@ -119,7 +119,7 @@ font-size:19px;
 
 <div class="container">
 
-<h1>Mission Calculus Escape</h1>
+<h1>Pengamiran: Mencari Persamaan Lengkung</h1>
 
 <div id="start">
 <p>Masukkan nama pelajar untuk memulakan misi.</p>
@@ -133,7 +133,7 @@ font-size:19px;
 
 <div class="math" id="question"></div>
 
-<input id="answer" placeholder="Contoh jawapan: x^2 + 2x + 2">
+<input id="answer" placeholder="Contoh jawapan: x^3 - 2x^2 + 3">
 
 <button onclick="submitAnswer()">Hantar Jawapan</button>
 
@@ -189,31 +189,39 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const database = firebase.database();
 
+// Soalan fokus pada pengamiran & persamaan lengkung
 const levels=[
 {
-question:"Diberi dy/dx = 2x + 2 dan y = 1 apabila x = -1.<br><br>Ungkap y dalam sebutan x.<br><br>∫(2x + 2) dx",
-answer:"x^2+2x+2",
-hint:"Langkah 1: Kamiran 2x + 2 ialah x<sup>2</sup> + 2x + C.<br>Langkah 2: Guna syarat y = 1 apabila x = -1 untuk mencari nilai C."
+question:`Fungsi kecerunan suatu lengkung ialah <br>
+\\(\\frac{dy}{dx} = 3x^2 - 4x\\). <br>
+Lengkung itu melalui titik (1,2).<br>
+Cari persamaan lengkung tersebut.`,
+answer:"x^3-2x^2+3",
+hint:`Langkah 1: Integrasikan dy/dx:<br>
+y = ∫(3x^2 - 4x) dx = x^3 - 2x^2 + C<br>
+Langkah 2: Gunakan titik (1,2) untuk cari C:<br>
+2 = 1 - 2 + C ⇒ C = 3<br>
+Jadi persamaan lengkung: y = x^3 - 2x^2 + 3`
 },
 {
-question:"Cari terbitan bagi fungsi berikut:<br><br>y = x<sup>2</sup>",
+question:"Cari terbitan bagi persamaan lengkung berikut:<br><br>y = x^2",
 answer:"2x",
-hint:"Gunakan peraturan kuasa:<br>d/dx (x<sup>n</sup>) = n x<sup>n-1</sup>"
+hint:"Gunakan peraturan kuasa: d/dx (x^n) = n x^(n-1)"
 },
 {
-question:"Cari terbitan bagi:<br><br>y = 3x<sup>2</sup>",
+question:"Cari terbitan bagi:<br><br>y = 3x^2",
 answer:"6x",
-hint:"Terbitkan dahulu x<sup>2</sup> menjadi 2x kemudian darab dengan 3."
+hint:"Terbitkan x^2 menjadi 2x kemudian darab dengan 3."
 },
 {
 question:"Cari terbitan bagi:<br><br>y = sin(x)",
 answer:"cos(x)",
-hint:"Formula asas:<br>d/dx sin(x) = cos(x)"
+hint:"Formula asas: d/dx sin(x) = cos(x)"
 },
 {
-question:"Cari kamiran berikut:<br><br>∫ 2x dx",
+question:"Cari kamiran bagi:<br><br>∫ 2x dx",
 answer:"x^2",
-hint:"Gunakan formula:<br>∫ x<sup>n</sup> dx = x<sup>n+1</sup> / (n+1)"
+hint:"Gunakan formula: ∫ x^n dx = x^(n+1)/(n+1)"
 }
 ]
 
@@ -227,7 +235,6 @@ function startGame(){
     return
   }
 
-  // Simpan nama pelajar di Firebase jika baru
   firebase.database().ref('players/'+player).set({
     name: player,
     startTime: Date.now(),
@@ -265,7 +272,6 @@ function submitAnswer(){
     document.getElementById("correctSound").play()
     level++
 
-    // Update level di Firebase
     firebase.database().ref('players/'+player).update({
       level: level
     });
@@ -288,7 +294,6 @@ function finishGame(){
   document.getElementById("finish").style.display="block"
   document.getElementById("score").innerText="Tahniah "+player+"! Anda telah menyelesaikan semua soalan."
 
-  // Update status selesai di Firebase
   firebase.database().ref('players/'+player).update({
     finished: true,
     finishTime: Date.now()
@@ -302,7 +307,6 @@ function loadLeaderboard(){
     board.innerHTML = ""
     const data = snapshot.val()
     if(data){
-      // Tukar ke array dan urut descending
       const arr = Object.values(data).sort((a,b)=>b.level - a.level || a.startTime - b.startTime)
       arr.forEach(p=>{
         const li = document.createElement('li')
